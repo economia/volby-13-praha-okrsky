@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="http://leafletjs.com/dist/leaflet.css" />
+    <!--[if lte IE 8]><link rel="stylesheet" href="http://leafletjs.com/dist/leaflet.ie.css" /><![endif]-->
+
+    <style>
+        body, html {margin:0;}
+        #map {
+            width: 670px;
+            height: 550px;
+            float: left;
+            clear: left;
+            display:inline;
+        }
+
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+
+        #combo {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            float: left;
+        }
+        #rokSelektor {
+            float: left;
+            margin-top: 7px;
+            margin-left: 15px;
+        }
+
+        .legend {
+            text-align: left;
+            line-height: 16px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 16px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="http://service.ihned.cz/js/chosen/chosen.min.css" />
+</head>
+<body>
+<div id="combo">
+Vyberte stranu:
+<select id="comboA" onchange="mapUpdate(this.value)">
+    <option value="CSSD">ČSSD</option>
+    <option value="SSO">Svobodní</option>
+    <option value="CPS">Piráti</option>
+    <option value="TOP09">TOP 09</option>
+    <option value="HLAVU_VZHU">Hlavu vzhůru</option>
+    <option value="ODS">ODS</option>
+    <option value="RDS">Romská demokratická strana</option>
+    <option value="KAN">Klub angažovaných nestraníků</option>
+    <option value="PHZ">Politické hnutí Změna</option>
+    <option value="SSCR">Strana soukromníků</option>
+    <option value="KDU_CSL">KDU-ČSL</option>
+    <option value="CIBULKA">Pravý blok Petra Cibulky</option>
+    <option value="SUVERENITA">Suverenita</option>
+    <option value="AKTIV_NO">Aktiv nezávislých občanů</option>
+    <option value="SPOZ">SPOZ</option>
+    <option value="OB11">Občané 2011</option>
+    <option value="USVIT">Úsvit přímé demokracie</option>
+    <option value="DSSS">Dělnická strana sociální spravedlnosti</option>
+    <option value="ANO">ANO 2011</option>
+    <option value="KSCM">KSČM</option>
+    <option value="LEV21">LEV 21</option>
+    <option value="SZ">Zelení</option>
+    <option value="KC">Koruna česká</option>
+</select>
+</div>
+<div id="map"></div>
+
+<script src="js/leaflet.js"></script>
+<script src="http://service.ihned.cz/js/jquery.min.js"></script>
+<script src="http://service.ihned.cz/js/chosen/chosen.jquery.min.js"></script>
+<script type="text/javascript" src="js/okrsky13Praha.js"></script>
+<script type="text/javascript">
+
+    function mapUpdate(value){
+        strana = value;
+        geojson.setStyle(style);
+        map.removeControl(legend);
+        legend.addTo(map);
+    };
+
+
+    var strana = "CSSD";
+    //used Jenks breaks
+    var ratio = {
+        "CSSD"    : [0.102785783, 0.130188679, 0.156822811, 0.188277087, 0.301587302],
+        "SSO"    : [0.022836539, 0.032581454, 0.042226488, 0.053680982, 0.085858586],
+        "CPS"   : [0.025139665, 0.034623218, 0.043879908, 0.056748466, 0.116666667],
+        "TOP09"    : [0.174545455, 0.215488215, 0.252808989, 0.295202952, 0.401898734],
+        "HLAVU_VZHU" : [0.002673797, 0.005917160, 0.010266941, 0.022857143, 0.063981043],
+        "ODS"      : [0.089324619, 0.112877583, 0.134020619, 0.163636364, 0.303858521],
+        "RDS"    : [0, 0, 0, 0, 0],
+        "KAN"    : [0, 0, 0, 0, 0],
+        "PHZ"   : [0.004040404, 0.007444169, 0.011004127, 0.015810277, 0.028673835],
+        "SSCR"    : [0.000778210, 0.002702703, 0.004555809, 0.007812500, 0.018750000],
+        "KDU_CSL" : [0.035573122, 0.048507463, 0.062208398, 0.080459770, 0.166666667],
+        "CIBULKA"      : [0.000944287, 0.002928258, 0.005115090, 0.008658009, 0.025773196],
+        "SUVERENITA"    : [0.000916590, 0.002666667, 0.004662005, 0.009345794, 0.023809524],
+        "AKTIV_NO"    : [0.000742942, 0.001972387, 0.003089598, 0.006006006, 0.011904762],
+        "SPOZ"   : [0.005405405, 0.010126582, 0.015748031, 0.028089888, 0.071428571],
+        "OB11"    : [0.000813008, 0.002570694, 0.004415011, 0.011673152, 0.035532995],
+        "USVIT" : [0.019801980, 0.029531568, 0.039170507, 0.051039698, 0.082514735],
+        "DSSS"      : [0.001398601, 0.004184100, 0.007633588, 0.013138686, 0.032128514],
+        "ANO"    : [0.125000000, 0.153846154, 0.180582524, 0.212189616, 0.326848249], //END
+        "KSCM"    : [0.059642147, 0.085383502, 0.114754098, 0.163398693, 0.324728261],
+        "LEV21"   : [0.00000000, 0.002155172, 0.003384095, 0.005405405, 0.011904762],
+        "SZ"    : [0.044776119, 0.061728395, 0.079395085, 0.102857143, 0.165191740],
+        "KC" : [0.000944287, 0.003076923, 0.005565863, 0.010714286, 0.022935780],
+    };
+    var map = L.map('map', {
+        minZoom: 11,
+        maxZoom: 18,
+        maxBounds: [[50.239, 14.094], [49.896, 14.800]]
+    }).setView([50.0598, 14.465], 11);
+
+    var cloudmade = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://creativecommons.org/licenses/by-nc-sa/3.0/cz/" target = "_blank">CC BY-NC-SA 3.0 CZ</a> IHNED.cz, map data &copy; 2011 OpenStreetMap contributors, data <a href="http://policie.cz", target = "_blank">PČR</a> a <a href="http://czso.cz", target = "_blank">ČSÚ</a>'
+    }).addTo(map);
+    var ortomapa = L.tileLayer('http://geoportal.cuzk.cz/WMTS_ORTOFOTO_900913/WMTService.aspx?service=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=orto&style=default&TileMatrixSet=googlemapscompatibleext2:epsg:3857&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/png', {
+        attribution: 'Map data © cuzk.cz'
+        });
+
+    var stranay_nazvy = {
+        "CSSD": "ČSSD",
+        "SSO": "Svobodní",
+        "CPS": "Piráti",
+        "TOP09": "TOP 09",
+        "HLAVU_VZHU": "Hlavu vzhůru",
+        "ODS": "ODS",
+        "RDS": "Romská demokratická strana",
+        "KAN": "Klub angažovaných nestraníků",
+        "PHZ": "Politické hnutí Změna",
+        "SSCR": "Strana soukromníků",
+        "KDU_CSL": "KDU-ČSL",
+        "CIBULKA": "Pravý blok Petra Cibulky",
+        "SUVERENITA": "Suverenita",
+        "AKTIV_NO": "Aktiv nezávislých občanů",
+        "SPOZ": "SPOZ",
+        "OB11": "Občané 2011",
+        "USVIT": "Úsvit přímé demokracie",
+        "DSSS": "Dělnická strana sociální spravedlnosti",
+        "ANO": "ANO 2011",
+        "KSCM": "KSČM",
+        "LEV21": "LEV 21",
+        "SZ": "Zelení",
+        "KC": "Koruna česká"
+    };
+
+    var info = L.control();
+
+    info.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'info');
+        this.update();
+        return this._div;
+    };
+
+    info.update = function (props) {
+        this._div.innerHTML = '<h4>' + stranay_nazvy[strana] + '</h4>' +  (props ?
+                '<b>' + props.VOLMIST_NA + '</b><br />' + props[strana] + ' hlasů z ' + props.celkem + ' odevzdaných hlasů'
+                : 'Najetím vyberte volební okrsek.');
+    };
+
+    info.addTo(map);
+
+
+    L.control.layers({
+        "Obecná mapa": cloudmade,
+        "Ortofotomapa": ortomapa
+    }).addTo(map);
+
+
+    // map coloring
+    function getColor(d) {
+        var colors = [ '#FEF0D9', '#FDCC8A', '#FC8D59', '#E34A33', '#B30000', 'gray' ];
+        var scale = ratio[strana];
+        for(var i = 0; i < scale.length; ++i) {
+            if(scale[i] >= d) {
+                break;
+            }
+        }
+        return colors[i];
+    }
+
+    function style(feature) {
+        return {
+            weight: 1,
+            opacity: 1,
+            color: 'white',
+            fillOpacity: 0.7,
+            fillColor: getColor((feature.properties[strana]/feature.properties.celkem))
+        };
+    }
+
+    function highlightFeature(e) {
+        var layer = e.target;
+
+        layer.setStyle({
+            weight: 1,
+            color: '#666',
+            fillOpacity: 0.6
+        });
+
+        if (!L.Browser.ie && !L.Browser.opera) {
+            layer.bringToFront();
+        }
+
+        info.update(layer.feature.properties);
+    }
+
+    var geojson;
+    function resetHighlight(e) {
+        geojson.resetStyle(e.target);
+        info.update();
+    }
+
+    function zoomToFeature(e) {
+        map.fitBounds(e.target.getBounds());
+    }
+
+    function onEachFeature(feature, layer) {
+        layer.on({
+            mouseover: highlightFeature,
+            mouseout: resetHighlight,
+            click: zoomToFeature
+        });
+    }
+
+    geojson = L.geoJson(praha, {
+        style: style,
+        onEachFeature: onEachFeature
+    }).addTo(map);
+
+    var legend = L.control({position: 'bottomright'});
+
+    function getLegendContent() {
+            var div = L.DomUtil.create('div', 'info legend'),
+                    grades = ratio[strana],
+                    labels = [],
+                    from, to;
+
+            for (var i = 0; i < grades.length; i++) {
+                from = grades[i];
+                to = grades[i + 1];
+
+                labels.push(
+                        '<i style="background:' + getColor(from) + '"></i> ' +
+                                Math.round(from*100000)/1000 + (Math.round(to*100000)/1000 ? ' - ' + Math.round(to*100000)/1000 : ' +') + " % hlasů");
+            }
+
+            div.innerHTML = labels.join('<br>');
+            return div;
+       };
+
+    legend.onAdd = getLegendContent;
+    legend.addTo(map);
+
+$("#comboA").chosen();
+</script>
+</body>
+</html>
