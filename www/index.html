@@ -90,9 +90,25 @@ Vyberte stranu:
 
 <script src="js/leaflet.js"></script>
 <script src="http://service.ihned.cz/js/jquery.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
 <script src="http://service.ihned.cz/js/chosen/chosen.jquery.min.js"></script>
 <script type="text/javascript" src="js/okrsky13Praha.js"></script>
 <script type="text/javascript">
+
+L.TopoJSON = L.GeoJSON.extend({
+  addData: function(jsonData) {    
+    if (jsonData.type === "Topology") {
+      for (key in jsonData.objects) {
+        geojson = topojson.feature(jsonData, jsonData.objects[key]);
+        L.GeoJSON.prototype.addData.call(this, geojson);
+      }
+    }    
+    else {
+      L.GeoJSON.prototype.addData.call(this, jsonData);
+    }
+  }  
+});
+
 
     function mapUpdate(value){
         strana = value;
@@ -178,7 +194,7 @@ Vyberte stranu:
 
     info.update = function (props) {
         this._div.innerHTML = '<h4>' + stranay_nazvy[strana] + '</h4>' +  (props ?
-                '<b>' + props.VOLMIST_NA + '</b><br />' + props[strana] + ' hlasů z ' + props.celkem + ' odevzdaných hlasů'
+                '<b>' + props.VOLMIST_NA + " (" + props.NAZMC + ')</b><br />' + props[strana] + ' hlasů z ' + props.celkem + ' odevzdaných hlasů'
                 : 'Najetím vyberte volební okrsek.');
     };
 
@@ -247,7 +263,7 @@ Vyberte stranu:
         });
     }
 
-    geojson = L.geoJson(praha, {
+    geojson = new L.TopoJSON(praha, {
         style: style,
         onEachFeature: onEachFeature
     }).addTo(map);
