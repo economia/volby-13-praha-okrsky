@@ -194,7 +194,7 @@ L.TopoJSON = L.GeoJSON.extend({
 
     info.update = function (props) {
         this._div.innerHTML = '<h4>' + stranay_nazvy[strana] + '</h4>' +  (props ?
-                '<b>' + props.VOLMIST_NA + " (" + props.NAZMC + ')</b><br />' + props[strana] + ' hlasů z ' + props.celkem + ' odevzdaných hlasů'
+                '<b>' + props.VOLMIST_NA + " (" + props.NAZMC + ')</b><br />' + props[strana] + ' hlasů z ' + props.CELKEM + ' odevzdaných hlasů'
                 : 'Najetím vyberte volební okrsek.');
     };
 
@@ -225,7 +225,7 @@ L.TopoJSON = L.GeoJSON.extend({
             opacity: 1,
             color: 'white',
             fillOpacity: 0.7,
-            fillColor: getColor((feature.properties[strana]/feature.properties.celkem))
+            fillColor: getColor((feature.properties[strana]/feature.properties.CELKEM))
         };
     }
 
